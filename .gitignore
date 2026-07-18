@@ -1,0 +1,20 @@
+# Terraform state files (SENSITIVE - contains passwords, IPs, instance IDs)
+*.tfstate
+*.tfstate.*
+
+# Terraform plan files (binary, contains secrets)
+*.tfplan
+
+# Provider binaries (HUGE, OS-specific, don't commit)
+.terraform/
+
+# Credentials and local variables
+terraform.tfvars
+*.auto.tfvars
+
+# SSH private keys
+*.pem
+
+# Crash logs
+crash.log
+crash.*.log
