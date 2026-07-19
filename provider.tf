@@ -10,7 +10,7 @@ terraform {
     key = "project/terraform.tfstate"
     region = "ap-southeast-1"
     encrypt = true
-    use_use_lockfile = true    
+    use_lockfile = true    
   }
 }
 

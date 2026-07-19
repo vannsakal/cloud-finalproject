@@ -183,7 +183,10 @@ resource "aws_instance" "WebServer" {
   // IAM role
   //iam_instance_profile        = aws_iam_instance_profile.instance_profile.name
   
-  user_data = file("${path.module}/server_setup.sh")
+  # user_data = file("${path.module}/server_setup.sh")
+  user_data = templatefile("${path.module}/server_setup.sh", {
+    cf_tunnel_token = var.cf_tunnel_token
+  })
 
   vpc_security_group_ids = [
     aws_security_group.cloud_project_group.id
