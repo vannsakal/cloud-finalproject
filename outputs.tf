@@ -71,19 +71,19 @@ output "cloud_project_group_id" {
 
 # value of public DNS 
 
-output "web_server_public_dns" {
-  value = aws_instance.WebServer.public_dns
-}
+# output "web_server_public_dns" {
+#   value = aws_instance.WebServer.public_dns
+# }
 
 # value of public IP
 
-output "web_server_public_ip" {
-  value = aws_instance.WebServer.public_ip
-}
+# output "web_server_public_ip" {
+#   value = aws_instance.WebServer.public_ip
+# }
 
 output "website_url" {
   
-  value = "http://${aws_instance.WebServer.public_dns}"
+  value = "http://${var.domain_name}"
   description = "The URL to access the web server"
 
 }
