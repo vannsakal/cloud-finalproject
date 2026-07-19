@@ -136,7 +136,7 @@ resource "aws_security_group_rule" "allow_ssh_in" {
   from_port = 22
   to_port = 22
   protocol = "tcp"
-  cidr_blocks = [var.my_ip]    # change it to 0.0.0.0/0
+  cidr_blocks = ["0.0.0.0/0"]    # change it to 0.0.0.0/0
   security_group_id = aws_security_group.cloud_project_group.id
 
 }
