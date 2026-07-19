@@ -1,9 +1,10 @@
-# Create the VPC
+# Create the VPC (isolated private network in aws)
 
 resource "aws_vpc" "main" {
 
     cidr_block = var.main_vpc_cidr
     instance_tenancy = "default"
+    enable_dns_hostnames = true
     tags = {
 
         "Name" = "tf-vpc-project"
@@ -14,7 +15,7 @@ resource "aws_vpc" "main" {
 
 # Create Internet Gateway and attach it to VPC
 
-resource "aws_internet_gateway" "igw" {
+resource "aws_internet_gateway" "igw" { 
     
     vpc_id = aws_vpc.main.id
     tags = {
@@ -28,7 +29,7 @@ resource "aws_subnet" "public_subnet_a" {
   
   vpc_id = aws_vpc.main.id
   cidr_block = var.public_subnet_range_a
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = true    # any instances launched in this subnet automatically gets a public IP address
   availability_zone = "ap-southeast-1a"
   tags = {
     "Name" = "${var.environment}-public-subnet-a"
@@ -73,7 +74,7 @@ resource "aws_route_table" "private_rt" {
 
 # Create Route table for Public Subnets
 
-resource "aws_route_table" "pubic_rt" {
+resource "aws_route_table" "public_rt" {
   
  vpc_id = aws_vpc.main.id
  route{
@@ -93,7 +94,7 @@ resource "aws_route_table" "pubic_rt" {
 resource "aws_route_table_association" "private_rt_association_a" {
   
     subnet_id = aws_subnet.private_subnet_a.id
-    route_table_id = aws_route_table.private_rt
+    route_table_id = aws_route_table.private_rt.id  # attach the Private route table to the subnet to follow the rules
 
 }
 
@@ -102,7 +103,7 @@ resource "aws_route_table_association" "private_rt_association_a" {
 resource "aws_route_table_association" "private_rt_association_b" {
   
     subnet_id = aws_subnet.private_subnet_b.id
-    route_table_id = aws_route_table.private_rt
+    route_table_id = aws_route_table.private_rt.id  # attach the Private route table to the subnet to follow the rules
 
 }
 
@@ -111,7 +112,7 @@ resource "aws_route_table_association" "private_rt_association_b" {
 resource "aws_route_table_association" "public_rt_association_a" {
   
    subnet_id = aws_subnet.public_subnet_a.id
-   route_table_id = aws_route_table.pubic_rt.id
+   route_table_id = aws_route_table.public_rt.id
 
 }
 
@@ -150,7 +151,7 @@ resource "aws_security_group_rule" "allow_http_in" {
   to_port = 80
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.cloud_project_group
+  security_group_id = aws_security_group.cloud_project_group.id
 
 }
 
@@ -164,6 +165,35 @@ resource "aws_security_group_rule" "allow_all_out" {
   to_port = "0"
   protocol = "-1"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.cloud_project_group
+  security_group_id = aws_security_group.cloud_project_group.id
   
 }
+
+###########################
+########### EC2 ###########
+###########################
+
+resource "aws_instance" "WebServer" {
+  
+  ami = "ami-02d23a03f80ba79fc"
+  instance_type = "t3.micro"
+  subnet_id = aws_subnet.public_subnet_a.id
+  key_name = "lab5"
+
+  // IAM role
+  //iam_instance_profile        = aws_iam_instance_profile.instance_profile.name
+  
+  user_data = file("${path.module}/server_setup.sh")
+
+  vpc_security_group_ids = [
+    aws_security_group.cloud_project_group.id
+  ]
+  
+  tags = {
+    Name = "WebApp"
+    OS = "RedHat"
+  }
+
+}
+
+
