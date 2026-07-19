@@ -38,8 +38,21 @@ variable "my_ip" {
     description = "allow ssh from my computer"
     type = string
 }
-##### S3 bucket #######
+#### S3 bucket ####
 variable "bucket_name" {
   type    = string
   default = "cloud-finalproject-bucket-sam-unique-2026"
+}
+
+#### Cloudflare tunnel ####
+
+variable "cf_tunnel_token" {
+  description = "Cloudflare tunnel token"
+  type        = string
+}
+
+variable "domain_name" {
+  description = "Cloudflare domain"
+  type        = string
+  default     = "cloud-aws.sybau-ctf.space"
 }
