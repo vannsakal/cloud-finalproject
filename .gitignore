@@ -18,3 +18,7 @@ terraform.tfvars
 # Crash logs
 crash.log
 crash.*.log
+
+# lock module
+
+*.lock.hcl
