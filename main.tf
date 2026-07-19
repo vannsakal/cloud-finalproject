@@ -4,7 +4,7 @@ resource "aws_vpc" "main" {
 
     cidr_block = var.main_vpc_cidr
     instance_tenancy = "default"
-    enable_dns_hostnames = true
+    // enable_dns_hostnames = true # we are using cloudflare tunnel
     tags = {
 
         "Name" = "tf-vpc-project"
@@ -136,7 +136,7 @@ resource "aws_security_group_rule" "allow_ssh_in" {
   from_port = 22
   to_port = 22
   protocol = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]    # change it to 0.0.0.0/0
+  cidr_blocks = [var.my_ip]    
   security_group_id = aws_security_group.cloud_project_group.id
 
 }
@@ -199,9 +199,10 @@ resource "aws_instance" "WebServer" {
 
 }
 
+###########################
+########### S3 ############
+###########################
 
-##########S3#################
-#############################
 
 resource "aws_s3_bucket" "app_storage" {
   bucket        = var.bucket_name
