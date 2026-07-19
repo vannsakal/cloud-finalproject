@@ -1,0 +1,1 @@
+my_ip = "your_public_ip_here" # for ssh into EC2 instances

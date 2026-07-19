@@ -197,3 +197,85 @@ resource "aws_instance" "WebServer" {
 }
 
 
+##########S3#################
+#############################
+
+resource "aws_s3_bucket" "app_storage" {
+  bucket        = var.bucket_name
+  force_destroy = true
+  tags = {
+    Name    = "app-storage-bucket"
+    Project = "CloudComputing"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "app_storage_privacy" {
+  bucket = aws_s3_bucket.app_storage.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_versioning" "app_storage_versioning" {
+  bucket = aws_s3_bucket.app_storage.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "app_storage_crypto" {
+  bucket = aws_s3_bucket.app_storage.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_iam_role" "instance_role" {
+  name = "${var.environment}-ec2-s3-role"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "ec2_s3_access" {
+  name = "ec2-s3-access-policy"
+  role = aws_iam_role.instance_role.id
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "${aws_s3_bucket.app_storage.arn}",
+        "${aws_s3_bucket.app_storage.arn}/*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_instance_profile" "instance_profile" {
+  name = "${var.environment}-ec2-instance-profile"
+  role = aws_iam_role.instance_role.name
+}
