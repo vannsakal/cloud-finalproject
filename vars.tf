@@ -8,3 +8,8 @@ variable "my_ip" {
     description = "allow ssh from my computer"
     type = string
 }
+##### S3 bucket #######
+variable "bucket_name" {
+  type    = string
+  default = "cloud-finalproject-bucket-sam-unique-2026"
+}

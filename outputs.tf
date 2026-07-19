@@ -87,3 +87,16 @@ output "website_url" {
   description = "The URL to access the web server"
 
 }
+###########################
+########### S3 ############
+###########################
+
+output "s3_bucket_name" {
+  value       = aws_s3_bucket.app_storage.id
+  description = "The globally unique name of the S3 bucket"
+}
+
+output "s3_bucket_arn" {
+  value       = aws_s3_bucket.app_storage.arn
+  description = "The Amazon Resource Name of the S3 bucket"
+}
