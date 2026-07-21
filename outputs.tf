@@ -79,3 +79,17 @@ output "alb_id" {
 
 }
 
+
+###########################
+######## S3 BUCKET ########
+###########################
+
+output "s3_bucket_name" {
+  value       = aws_s3_bucket.secure_bucket.id
+  description = "The name of the S3 bucket"
+}
+
+output "s3_bucket_arn" {
+  value       = aws_s3_bucket.secure_bucket.arn
+  description = "The ARN of the S3 bucket"
+}

@@ -243,3 +243,29 @@ resource "aws_launch_template" "launch-asg" {
     }
   }
 }
+###########################
+####### S3 BUCKET #########
+###########################
+
+resource "aws_s3_bucket" "secure_bucket" {
+  bucket = var.bucket_name
+}
+
+resource "aws_s3_bucket_public_access_block" "public_block" {
+  bucket = aws_s3_bucket.secure_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "bucket_crypto" {
+  bucket = aws_s3_bucket.secure_bucket.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
