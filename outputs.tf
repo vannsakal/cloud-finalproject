@@ -100,3 +100,9 @@ output "s3_bucket_arn" {
   value       = aws_s3_bucket.app_storage.arn
   description = "The Amazon Resource Name of the S3 bucket"
 }
+
+# RDS output
+output "rds_endpoint" {
+  value = aws_db_instance.main.address
+  description = "MySQL RDS connection endpoint"
+}

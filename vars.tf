@@ -54,3 +54,21 @@ variable "domain_name" {
   type        = string
   default     = "cloud-aws.sybau-ctf.space"
 }
+
+
+# RDS
+
+variable "db_username" {
+  description = "RDS master username"
+  type        = string
+}
+variable "db_password" {
+  description = "RDS master password"
+  type        = string
+  sensitive   = true
+}
+variable "db_name" {
+  description = "RDS database name"
+  type        = string
+  default     = "webapp_db"
+}
