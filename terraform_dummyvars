@@ -1,3 +1,0 @@
-my_ip = "your_ip/32" # public ip here for ssh into ec2 instances
-cf_tunnel_token  = "ur cf tunnel token"
-domain_name      = "your_domain_name"

@@ -2,72 +2,73 @@
 
 resource "aws_vpc" "main" {
 
-    cidr_block = var.main_vpc_cidr
-    instance_tenancy = "default"
-    // enable_dns_hostnames = true # we are using cloudflare tunnel
-    tags = {
+  cidr_block       = var.main_vpc_cidr
+  instance_tenancy = "default" # shared hardware, cheaper I guess
+  // enable_dns_hostnames = true # we are using cloudflare tunnel
+  tags = {
 
-        "Name" = "tf-vpc-project"
+    "Name" = "tf-vpc-project"
 
-    }
+  }
 
 }
 
 # Create Internet Gateway and attach it to VPC
 
-resource "aws_internet_gateway" "igw" { 
-    
-    vpc_id = aws_vpc.main.id
-    tags = {
-        "Name" = "tf-igw-project"
-    }
+resource "aws_internet_gateway" "igw" {
+
+  vpc_id = aws_vpc.main.id
+  tags = {
+    "Name" = "tf-igw-project"
+  }
 }
 
-# Create 3 subnets: two private and one public
+# Create 4 subnets: two private and two public
 
 resource "aws_subnet" "public_subnet_a" {
-  
-  vpc_id = aws_vpc.main.id
-  cidr_block = var.public_subnet_range_a
-  map_public_ip_on_launch = true    # any instances launched in this subnet automatically gets a public IP address
-  availability_zone = "ap-southeast-1a"
+
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_range_a
+  map_public_ip_on_launch = true # any instances launched in this subnet automatically gets a public IP address
+  availability_zone       = var.availability_zone[0]
   tags = {
     "Name" = "${var.environment}-public-subnet-a"
   }
 
 }
 
+resource "aws_subnet" "public_subnet_b" {
+
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_range_b
+  map_public_ip_on_launch = true
+  availability_zone       = var.availability_zone[1]
+  tags = {
+    "Name" = "${var.environment}-public-subnet-b"
+  }
+
+}
+
 resource "aws_subnet" "private_subnet_a" {
-  
-  vpc_id = aws_vpc.main.id
-  cidr_block = var.private_subnet_range_a
+
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.private_subnet_range_a
   map_public_ip_on_launch = false
-  availability_zone = "ap-southeast-1a"
+  availability_zone       = var.availability_zone[0]
   tags = {
     "Name" = "${var.environment}-private-subnet-a"
   }
-  
+
 }
 
 resource "aws_subnet" "private_subnet_b" {
-  
-  vpc_id = aws_vpc.main.id
-  cidr_block = var.private_subnet_range_b
+
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.private_subnet_range_b
   map_public_ip_on_launch = false
-  availability_zone = "ap-southeast-1b"
+  availability_zone       = var.availability_zone[1]
   tags = {
     "Name" = "${var.environment}-private-subnet-b"
-  }
-  
-}
-
-# Create Route table for Private Subnets
-
-resource "aws_route_table" "private_rt" {
-  
-  vpc_id = aws_vpc.main.id
-  tags = {
-    "Name" = "${var.environment}-private-route-table"
   }
 
 }
@@ -75,211 +76,170 @@ resource "aws_route_table" "private_rt" {
 # Create Route table for Public Subnets
 
 resource "aws_route_table" "public_rt" {
-  
- vpc_id = aws_vpc.main.id
- route{
+
+  vpc_id = aws_vpc.main.id
+  route {
 
     # Traffic from Public Subnet reaches Internet via Internet Gateway
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
- }
- tags = {
-   "Name" = "${var.environment}-public-route-table"
- }
+  }
+  tags = {
+    "Name" = "${var.environment}-public-route-table"
+  }
 
 }
+
+# Create Route table for Private Subnets
+
+resource "aws_route_table" "private_rt_a" {
+
+  vpc_id = aws_vpc.main.id
+  tags = {
+    "Name" = "${var.environment}-private-route-table"
+  }
+
+}
+
+resource "aws_route_table" "private_rt_b" {
+
+  vpc_id = aws_vpc.main.id
+  tags = {
+    "Name" = "${var.environment}-private-route-table"
+  }
+
+}
+
 
 # Route table Association with Private Subnet A
 
 resource "aws_route_table_association" "private_rt_association_a" {
-  
-    subnet_id = aws_subnet.private_subnet_a.id
-    route_table_id = aws_route_table.private_rt.id  # attach the Private route table to the subnet to follow the rules
+
+  subnet_id      = aws_subnet.private_subnet_a.id
+  route_table_id = aws_route_table.private_rt_a.id # attach the Private route table to the subnet to follow the rules
 
 }
 
 # Route table Association with Private Subnet B
 
 resource "aws_route_table_association" "private_rt_association_b" {
-  
-    subnet_id = aws_subnet.private_subnet_b.id
-    route_table_id = aws_route_table.private_rt.id  # attach the Private route table to the subnet to follow the rules
 
+  subnet_id      = aws_subnet.private_subnet_b.id
+  route_table_id = aws_route_table.private_rt_b.id # attach the Private route table to the subnet to follow the rules
+
+}
+
+###########################
+####### NAT GATEWAYS ######
+###########################
+
+# AWS Elastic IP, this is a static Public IPv4
+
+resource "aws_eip" "nat-a" {
+  domain = "vpc"
+  tags = {
+    Name = "${var.environment}-nat-gw-a"
+  }
+}
+
+resource "aws_eip" "nat-b" {
+  domain = "vpc"
+  tags = {
+    Name = "${var.environment}-nat-gw-b"
+  }
+}
+
+# NAT Gateways placed in the PUBLIC subnets (they need the IGW)
+
+resource "aws_nat_gateway" "nat-a" {
+  allocation_id = aws_eip.nat-a.id
+  subnet_id     = aws_subnet.public_subnet_a.id # NAT gateway must be in public subnet
+  tags = {
+    Name = "${var.environment}-nat-gw-a"
+  }
+  depends_on = [aws_internet_gateway.igw]
+}
+
+resource "aws_nat_gateway" "nat-b" {
+  allocation_id = aws_eip.nat-b.id
+  subnet_id     = aws_subnet.public_subnet_b.id # NAT gateway must be in public subnet
+  tags = {
+    Name = "${var.environment}-nat-gw-b"
+  }
+  depends_on = [aws_internet_gateway.igw]
+}
+
+resource "aws_route" "private_nat_route_a" {
+  route_table_id         = aws_route_table.private_rt_a.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.nat-a.id # tell these bitch ass instances to send traffic to the NAT to reach internet
+}
+
+resource "aws_route" "private_nat_route_b" {
+  route_table_id         = aws_route_table.private_rt_b.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.nat-b.id # tell these bitch ass instances to send traffic to the NAT to reach internet
 }
 
 # Route table Association with Public Subnet A
 
 resource "aws_route_table_association" "public_rt_association_a" {
-  
-   subnet_id = aws_subnet.public_subnet_a.id
-   route_table_id = aws_route_table.public_rt.id
+
+  subnet_id      = aws_subnet.public_subnet_a.id
+  route_table_id = aws_route_table.public_rt.id
 
 }
 
-# Define security group
-
-resource "aws_security_group" "cloud_project_group" {
-  
-   name = "${var.environment}-dingus-sg"
-   description = "Default Security group to allow inbound/outbound from the VPC"
-   vpc_id = aws_vpc.main.id
-   depends_on = [ aws_vpc.main ]
-
-}
-
-# Allow inbound SSH for EC2 instances
-
-resource "aws_security_group_rule" "allow_ssh_in" {
-  
-  description = "Allow SSH"
-  type = "ingress"
-  from_port = 22
-  to_port = 22
-  protocol = "tcp"
-  cidr_blocks = [var.my_ip]    
-  security_group_id = aws_security_group.cloud_project_group.id
-
-}
-
-# Allow inbound HTTP for EC2 instances
-
-resource "aws_security_group_rule" "allow_http_in" {
-  
-  description = "Allow inbount HTTP traffic"
-  type = "ingress"
-  from_port = 80
-  to_port = 80
-  protocol = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.cloud_project_group.id
-
-}
-
-# Allow all outbound traffic
-
-resource "aws_security_group_rule" "allow_all_out" {
-  
-  description = "Allow outbound traffic"
-  type = "egress"
-  from_port = "0"
-  to_port = "0"
-  protocol = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.cloud_project_group.id
-  
+resource "aws_route_table_association" "public_rt_association_b" {
+  subnet_id      = aws_subnet.public_subnet_b.id
+  route_table_id = aws_route_table.public_rt.id
 }
 
 ###########################
-########### EC2 ###########
+########### ASG ###########
 ###########################
 
-resource "aws_instance" "WebServer" {
-  
-  ami = "ami-02d23a03f80ba79fc"
-  instance_type = "t3.micro"
-  subnet_id = aws_subnet.public_subnet_a.id
-  key_name = "lab5"
+resource "aws_autoscaling_group" "terraform_asg" {
+  name                = "dingdong-asg"
+  min_size            = var.min_size                                                     # 2 instances must always be running
+  max_size            = var.max_size                                                     # maximum instances
+  desired_capacity    = var.desired_capacity                                             # 2, if one crash, spin up another one bih ah Pheaktra
+  vpc_zone_identifier = [aws_subnet.private_subnet_a.id, aws_subnet.private_subnet_b.id] # ayo, put these fking instances in these subnets
 
-  // IAM role
-  //iam_instance_profile        = aws_iam_instance_profile.instance_profile.name
-  
-  # user_data = file("${path.module}/server_setup.sh")
-  user_data = templatefile("${path.module}/server_setup.sh", {
-    cf_tunnel_token = var.cf_tunnel_token
-  })
+  target_group_arns = [aws_lb_target_group.reverse_proxy.arn] # associate me with them balancer
 
-  vpc_security_group_ids = [
-    aws_security_group.cloud_project_group.id
-  ]
-  
-  tags = {
-    Name = "WebApp"
-    OS = "RedHat"
+  # Define the launch template used by the ASG for creating instances
+  launch_template {
+    id      = aws_launch_template.launch-asg.id # launch using our template
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "terraform-asg"
+    propagate_at_launch = true
   }
 
 }
 
-###########################
-########### S3 ############
-###########################
+# ASG Launch Template aka. EC2
 
+resource "aws_launch_template" "launch-asg" {
+  name          = "my-launch-asg"
+  image_id      = var.ami_id
+  instance_type = var.instance_type
+  user_data     = base64encode(file("server_setup.sh"))
 
-resource "aws_s3_bucket" "app_storage" {
-  bucket        = var.bucket_name
-  force_destroy = true
-  tags = {
-    Name    = "app-storage-bucket"
-    Project = "CloudComputing"
+  vpc_security_group_ids = [aws_security_group.asg_sg.id] # attach the firewall or sg
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ssm_profile.name # assign role to our ec2, to say fk the ssh key, we dont need that
   }
-}
 
-resource "aws_s3_bucket_public_access_block" "app_storage_privacy" {
-  bucket = aws_s3_bucket.app_storage.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_versioning" "app_storage_versioning" {
-  bucket = aws_s3_bucket.app_storage.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "app_storage_crypto" {
-  bucket = aws_s3_bucket.app_storage.id
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "MyLaunchASGInstance"
     }
   }
-}
-
-resource "aws_iam_role" "instance_role" {
-  name = "${var.environment}-ec2-s3-role"
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_iam_role_policy" "ec2_s3_access" {
-  name = "ec2-s3-access-policy"
-  role = aws_iam_role.instance_role.id
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:ListBucket"
-      ],
-      "Resource": [
-        "${aws_s3_bucket.app_storage.arn}",
-        "${aws_s3_bucket.app_storage.arn}/*"
-      ]
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_iam_instance_profile" "instance_profile" {
-  name = "${var.environment}-ec2-instance-profile"
-  role = aws_iam_role.instance_role.name
 }
