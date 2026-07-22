@@ -228,7 +228,13 @@ resource "aws_launch_template" "launch-asg" {
   name          = "my-launch-asg"
   image_id      = var.ami_id
   instance_type = var.instance_type
-  user_data     = base64encode(file("server_setup.sh"))
+  user_data = base64encode(templatefile("${path.module}/server_setup.sh.tpl", {
+    region     = var.aws_region
+    s3_bucket  = aws_s3_bucket.secure_bucket.id
+    s3_key     = aws_s3_object.webapp_package.key
+    secret_arn = aws_secretsmanager_secret.db_secret.arn
+    log_group  = aws_cloudwatch_log_group.webapp_logs.name
+  }))
 
   vpc_security_group_ids = [aws_security_group.asg_sg.id] # attach the firewall or sg
 

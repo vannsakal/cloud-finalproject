@@ -3,6 +3,12 @@ terraform {
     aws = {
       source = "hashicorp/aws"
     }
+    random = {
+      source = "hashicorp/random"
+    }
+    archive = {
+      source = "hashicorp/archive"
+    }
   }
 }
 

@@ -97,3 +97,47 @@ variable "bucket_name" {
   type        = string
   default     = "cloud-finalproject-s3-bucket-2026"
 }
+
+###########################
+######## RDS (MySQL) ######
+###########################
+
+variable "db_name" {
+  description = "Initial database name created on the RDS instance"
+  type        = string
+  default     = "appdb"
+}
+
+variable "db_username" {
+  description = "Master username for RDS"
+  type        = string
+  default     = "appadmin"
+}
+
+variable "db_engine_version" {
+  description = "MySQL engine version for RDS"
+  type        = string
+  default     = "8.0"
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "Allocated storage for RDS in GB"
+  type        = number
+  default     = 20
+}
+
+###########################
+######## Alerting #########
+###########################
+
+variable "alert_email" {
+  description = "Email address to subscribe to CloudWatch alarm notifications. Leave empty to skip the subscription."
+  type        = string
+  default     = ""
+}

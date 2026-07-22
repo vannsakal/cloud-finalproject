@@ -93,3 +93,35 @@ output "s3_bucket_arn" {
   value       = aws_s3_bucket.secure_bucket.arn
   description = "The ARN of the S3 bucket"
 }
+
+###########################
+########### RDS ###########
+###########################
+
+output "rds_endpoint" {
+  value       = aws_db_instance.app_db.address
+  description = "The connection endpoint of the RDS instance"
+}
+
+output "db_secret_arn" {
+  value       = aws_secretsmanager_secret.db_secret.arn
+  description = "ARN of the Secrets Manager secret holding DB credentials"
+}
+
+###########################
+######### ALB / APP #######
+###########################
+
+output "app_url" {
+  value       = "http://${aws_lb.web_alb.dns_name}"
+  description = "Public URL of the deployed web application"
+}
+
+###########################
+####### CLOUDWATCH #########
+###########################
+
+output "cloudwatch_dashboard_url" {
+  value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.main.dashboard_name}"
+  description = "Direct link to the CloudWatch dashboard"
+}
