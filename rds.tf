@@ -87,7 +87,8 @@ resource "aws_db_instance" "app_db" {
 # Stores DB creds so they never sit in plaintext in Terraform state outputs or the AMI/user_data
 
 resource "aws_secretsmanager_secret" "db_secret" {
-  name = "${var.environment}-app-db-credentials"
+  name                    = "${var.environment}-app-db-credentials"
+  recovery_window_in_days = 0 # lab project: allow immediate deletion instead of a recovery window, so destroy/apply cycles don't collide on the name
 }
 
 resource "aws_secretsmanager_secret_version" "db_secret_version" {
