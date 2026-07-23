@@ -114,3 +114,19 @@ variable "db_name" {
   default     = "webapp_db"
 }
 
+# CLOUDWATCH
+
+# Email address to receive CloudWatch alarm notifications via SNS
+variable "notification_email" {
+  description = "Email address subscribed to the CloudWatch alarms SNS topic"
+  type        = string
+  sensitive   = true
+}
+
+# CPU utilization threshold (%) that triggers ASG scaling
+variable "asg_target_cpu" {
+  description = "Target average CPU utilization (%) for ASG scaling"
+  type        = number
+  default     = 50
+}
+
