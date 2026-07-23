@@ -139,5 +139,4 @@ variable "db_allocated_storage" {
 variable "alert_email" {
   description = "Email address to subscribe to CloudWatch alarm notifications. Leave empty to skip the subscription."
   type        = string
-  default     = ""
 }
