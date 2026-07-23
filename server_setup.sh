@@ -1,4 +1,7 @@
 #!/bin/bash
+set -uo pipefail
+exec > /var/log/user-data.log 2>&1
+
 dnf update -y
 dnf install -y nginx
 systemctl enable nginx.service
