@@ -113,3 +113,4 @@ variable "db_name" {
   type        = string
   default     = "webapp_db"
 }
+
