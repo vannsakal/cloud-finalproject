@@ -231,11 +231,11 @@ resource "aws_launch_template" "launch-asg" {
   # user_data     = base64encode(file("server_setup.sh"))
   user_data = base64encode(templatefile("${path.module}/server_setup.sh", {
     # cf_tunnel_token = var.cf_tunnel_token
-    rds_endpoint    = aws_db_instance.main.address
-    rds_port        = aws_db_instance.main.port
-    db_name         = var.db_name
-    db_username     = var.db_username
-    db_password     = var.db_password
+    rds_endpoint = aws_db_instance.main.address
+    rds_port     = aws_db_instance.main.port
+    db_name      = var.db_name
+    db_username  = var.db_username
+    db_password  = var.db_password
   }))
 
   vpc_security_group_ids = [aws_security_group.asg_sg.id] # attach the firewall or sg

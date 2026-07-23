@@ -14,6 +14,7 @@ resource "aws_security_group" "alb_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  
   # egress to forward to anywhere on the internet, inluding our EC2
   egress {
     from_port   = 0
