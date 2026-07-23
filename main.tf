@@ -251,6 +251,7 @@ resource "aws_launch_template" "launch-asg" {
     }
   }
 }
+
 ###########################
 ####### S3 BUCKET #########
 ###########################
@@ -278,8 +279,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "bucket_crypto" {
   }
 }
 
+###########################
+####### RDS ##############
+###########################
 
-# RDS
 
 resource "aws_db_subnet_group" "main" {
   name       = "${var.environment}-db-subnet-group"
