@@ -93,3 +93,8 @@ output "s3_bucket_arn" {
   value       = aws_s3_bucket.secure_bucket.arn
   description = "The ARN of the S3 bucket"
 }
+
+
+output "alb_dns_name" {
+  value = aws_lb.web_alb.dns_name
+}
